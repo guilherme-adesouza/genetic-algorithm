@@ -1,3 +1,5 @@
+package traffic;
+
 public enum TrafficLight {
     A('A'), 
     B('B'),
@@ -6,9 +8,9 @@ public enum TrafficLight {
     E('E'),
     F('F');
 
-    private char id;
+    private final char id;
 
-    private TrafficLight(char id) {
+    TrafficLight(char id) {
         this.id = id;
     }
 

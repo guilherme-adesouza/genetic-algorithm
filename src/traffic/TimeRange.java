@@ -1,3 +1,5 @@
+package traffic;
+
 public enum TimeRange {
     A( 6,  7), 
     B( 7,  8),
@@ -7,10 +9,10 @@ public enum TimeRange {
     F(17, 19), 
     G(19, 23);
 
-    private int start;
-    private int end;
+    private final int start;
+    private final int end;
 
-    private TimeRange(int start, int end) {
+    TimeRange(int start, int end) {
         this.start = start;
         this.end = end;
     }

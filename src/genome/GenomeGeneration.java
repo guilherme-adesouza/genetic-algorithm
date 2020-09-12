@@ -1,3 +1,8 @@
+package genome;
+
+import traffic.TrafficGenome;
+import traffic.TrafficOption;
+
 import java.util.*;
 
 public class GenomeGeneration {
@@ -7,23 +12,14 @@ public class GenomeGeneration {
     private final float mutationRate;
     private final int tournamentSize;
 
-    private int genomeSize;
-    private int numberOfCities;
-    private SelectionType selectionType;
-    private int[][] travelPrices;
-    private int startingCity;
-    private int targetFitness;
+    private final int genomeSize;
+    private final SelectionType selectionType;
+    private final int targetFitness;
 
-    public GenomeGeneration(int numberOfCities, 
-                            SelectionType selectionType, 
-                            int[][] travelPrices, 
-                            int startingCity,
+    public GenomeGeneration(SelectionType selectionType,
                             int targetFitness) {
-        this.numberOfCities = numberOfCities;
-        this.genomeSize = numberOfCities - 1;
+        this.genomeSize = 7;
         this.selectionType = selectionType;
-        this.travelPrices = travelPrices;
-        this.startingCity = startingCity;
         this.targetFitness = targetFitness;
 
         generationSize = 5000;
@@ -36,28 +32,25 @@ public class GenomeGeneration {
     public List<TrafficGenome> initialPopulation() {
         List<TrafficGenome> population = new ArrayList<>();
         for (int i = 0; i < generationSize; i++) {
-            population.add(new TrafficGenome(numberOfCities, travelPrices, startingCity));
+            population.add(new TrafficGenome());
         }
         return population;
     }
 
     public List<TrafficGenome> selection(List<TrafficGenome> population) {
         List<TrafficGenome> selected = new ArrayList<>();
-        TrafficGenome winner;
         for (int i = 0; i < reproductionSize; i++) {
-            if (selectionType == SelectionType.ROULETTE) {
-                selected.add(rouletteSelection(population));
-            } else if (selectionType == SelectionType.TOURNAMENT) {
-                selected.add(tournamentSelection(population));
+            switch (selectionType) {
+                case TOURNAMENT -> selected.add(rouletteSelection(population));
+                case ROULETTE -> selected.add(tournamentSelection(population));
             }
         }
-
         return selected;
     }
 
     public TrafficGenome rouletteSelection(List<TrafficGenome> population) {
         int totalFitness = population.stream().map(TrafficGenome::getFitness).mapToInt(Integer::intValue).sum();
-        Random random = new Random();
+        final Random random = new Random();
         int selectedValue = random.nextInt(totalFitness);
         float recValue = (float) 1 / selectedValue;
         float currentSum = 0;
@@ -73,10 +66,11 @@ public class GenomeGeneration {
 
     public static <E> List<E> pickNRandomElements(List<E> list, int n) {
         int length = list.size();
-        if (length < n)
+        if (length < n) {
             return null;
+        }
 
-        Random r = new Random();
+        final Random r = new Random();
         for (int i = length - 1; i >= length - n; --i) {
             Collections.swap(list, i, r.nextInt(i + 1));
         }
@@ -92,9 +86,9 @@ public class GenomeGeneration {
         Random random = new Random();
         float mutate = random.nextFloat();
         if (mutate < mutationRate) {
-            List<Integer> genome = salesman.getGenome();
+            List<TrafficOption> genome = salesman.getGenome();
             Collections.swap(genome, random.nextInt(genomeSize), random.nextInt(genomeSize));
-            return new TrafficGenome(genome, numberOfCities, travelPrices, startingCity);
+            return new TrafficGenome(genome);
         }
         return salesman;
     }
@@ -115,30 +109,27 @@ public class GenomeGeneration {
 
     public List<TrafficGenome> crossover(List<TrafficGenome> parents) {
         // housekeeping
-        Random random = new Random();
+        final Random random = new Random();
         int breakpoint = random.nextInt(genomeSize);
         List<TrafficGenome> children = new ArrayList<>();
 
         // copy parental genomes - we copy so we wouldn't modify in case they were
         // chosen to participate in crossover multiple times
-        List<Integer> parent1Genome = new ArrayList<>(parents.get(0).getGenome());
-        List<Integer> parent2Genome = new ArrayList<>(parents.get(1).getGenome());
+        List<TrafficOption> firstGenome = new ArrayList<>(parents.get(0).getGenome());
+        List<TrafficOption> secondGenome = new ArrayList<>(parents.get(1).getGenome());
 
         // creating child 1
         for (int i = 0; i < breakpoint; i++) {
-            int newVal;
-            newVal = parent2Genome.get(i);
-            Collections.swap(parent1Genome, parent1Genome.indexOf(newVal), i);
+            Collections.swap(firstGenome, firstGenome.indexOf(secondGenome.get(i)), i);
         }
-        children.add(new TrafficGenome(parent1Genome, numberOfCities, travelPrices, startingCity));
-        parent1Genome = parents.get(0).getGenome(); // reseting the edited parent
+        children.add(new TrafficGenome(firstGenome));
+        firstGenome = parents.get(0).getGenome(); // reseting the edited parent
 
         // creating child 2
         for (int i = breakpoint; i < genomeSize; i++) {
-            int newVal = parent1Genome.get(i);
-            Collections.swap(parent2Genome, parent2Genome.indexOf(newVal), i);
+            Collections.swap(secondGenome, secondGenome.indexOf(firstGenome.get(i)), i);
         }
-        children.add(new TrafficGenome(parent2Genome, numberOfCities, travelPrices, startingCity));
+        children.add(new TrafficGenome(secondGenome));
 
         return children;
     }
@@ -150,8 +141,9 @@ public class GenomeGeneration {
             List<TrafficGenome> selected = selection(population);
             population = createGeneration(selected);
             globalBestGenome = Collections.min(population);
-            if (globalBestGenome.getFitness() < targetFitness)
+            if (globalBestGenome.getFitness() < targetFitness) {
                 break;
+            }
         }
         return globalBestGenome;
     }
