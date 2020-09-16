@@ -41,8 +41,10 @@ public class GenomeGeneration {
         List<TrafficGenome> selected = new ArrayList<>();
         for (int i = 0; i < reproductionSize; i++) {
             switch (selectionType) {
-                case TOURNAMENT -> selected.add(rouletteSelection(population));
-                case ROULETTE -> selected.add(tournamentSelection(population));
+                case TOURNAMENT:
+                	selected.add(rouletteSelection(population));
+                case ROULETTE:
+                	selected.add(tournamentSelection(population));
             }
         }
         return selected;
